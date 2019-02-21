@@ -3,37 +3,26 @@ import Blog from './components/Blog'
 import Notification from './components/Notification'
 import Togglable from './components/Togglable'
 import LoginForm from './components/LoginForm'
+import LogoutForm from './components/LogoutForm'
 import BlogForm from './components/BlogForm'
 import blogService from './services/blogs'
 import loginService from './services/login'
-
-const Footer = () => {
-    const footerStyle = {
-        color: 'green',
-        fontStyle: 'italic',
-        fontSize: 16
-    }
-    return (
-        <div style={footerStyle}>
-            <br/>
-            <em>Blog app, Department of Computer Science 2019</em>
-        </div>
-    )
-}
 
 const App = () => {
     const [blogs, setBlogs] = useState([])
     const [newTitle, setNewTitle] = useState('')
     const [newAuthor, setNewAuthor] = useState('')
     const [newUrl, setNewUrl] = useState('')
-    // const [showAll, setShowAll] = useState(true)
-    const [errorMessage, setErrorMessage] = useState(null)
+    // const [showAll, setShowAll] = useState(false)
+    const [notification, setNotification] = useState({
+        message: null
+    })
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [user, setUser] = useState(null)
     useEffect(() => {
         blogService.getAll().then(initialBlogs => {
-            setBlogs(initialBlogs)
+            setBlogs(initialBlogs.map(blog => ({blog, show: false})))
         })
     }, [])
     useEffect(() => {
@@ -60,23 +49,31 @@ const App = () => {
     //             setBlogs(blogs.filter(n => n.id !== id))
     //         })
     // }
-    // const notesToShow = showAll
+    // const blogsToShow = showAll
     //     ? blogs
-    //     : blogs.filter(note => note.important)
-    const addBlog = (event) => {
+    // : blogs.filter(note => note.important)
+    const notify = (message, type = 'success') => {
+        setNotification({message, type})
+        setTimeout(() => setNotification({message: null}), 5000)
+    }
+    const addBlog = async (event) => {
         event.preventDefault()
-        blogFormRef.current.toggleVisibility()
-        const blogObject = {
-            title: newTitle,
-            author: newAuthor,
-            url: newUrl,
-        }
-        blogService.create(blogObject).then(returnedBlog => {
-            setBlogs(blogs.concat(returnedBlog))
+        try {
+            blogFormRef.current.toggleVisibility()
+            const blogObject = {
+                title: newTitle,
+                author: newAuthor,
+                url: newUrl,
+            }
+            const returnedBlog = await blogService.create(blogObject)
+            setBlogs(blogs.concat({blog: returnedBlog, show: false}))
+            notify(`a new blog ${newTitle}, by ${newAuthor} added`)
             setNewTitle('')
             setNewAuthor('')
             setNewUrl('')
-        })
+        } catch (exception) {
+            notify('bad title, author or url', 'error')
+        }
     }
     const handleTitleChange = (event) => {
         setNewTitle(event.target.value)
@@ -98,34 +95,60 @@ const App = () => {
             setUser(user)
             setUsername('')
             setPassword('')
+            // setShowAll(true)
         } catch (exception) {
-            setErrorMessage('käyttäjätunnus tai salasana virheellinen')
-            setTimeout(() => {
-                setErrorMessage(null)
-            }, 5000)
+            notify('wrong username or password', 'error')
         }
     }
-    // const rows = () => blogsToShow.map(blog =>
-    const rows = () => blogs.map(blog =>
+    const handleLogout = (event) => {
+        window.localStorage.removeItem('loggedBlogappUser')
+        blogService.setToken(null)
+        setUser(null)
+        // setShowAll(false)
+    }
+
+    const handleBlogClick = (currentItem) => (event) => {
+        setBlogs(blogs
+            .filter(item => item.blog.id !== currentItem.blog.id)
+            .concat({blog: currentItem.blog, show: !currentItem.show})
+            .sort((a, b) => b.blog.likes - a.blog.likes))
+    }
+    const handleBlogLike = (currentItem) => async (event) => {
+        const blog = currentItem.blog
+        const updatedBlog = {
+            user: blog.user.id,
+            title: blog.title,
+            author: blog.author,
+            url: blog.url,
+            likes: blog.likes + 1,
+        }
+        const returnedBlog = await blogService.update(blog.id, updatedBlog)
+        setBlogs(blogs
+            .filter(item => item.blog.id !== currentItem.blog.id)
+            .concat({blog: returnedBlog, show: currentItem.show})
+            .sort((a, b) => b.blog.likes - a.blog.likes))
+    }
+    const rows = () => blogs.map(item =>
         <Blog
-            key={blog.id}
-            blog={blog}
+            key={item.blog.id}
+            blog={item.blog}
+            show={item.show}
+            onClick={handleBlogClick(item)}
+            onLike={handleBlogLike(item)}
             // toggleImportance={() => toggleImportanceOf(blog.id)}
         />
     )
-    const loginForm = () => {
-        return (
-            <Togglable buttonLabel='login'>
-                <LoginForm
-                    username={username}
-                    password={password}
-                    handleUsernameChange={({target}) => setUsername(target.value)}
-                    handlePasswordChange={({target}) => setPassword(target.value)}
-                    handleSubmit={handleLogin}
-                />
-            </Togglable>
-        )
-    }
+    const loginForm = () => (
+        <Togglable buttonLabel='login'>
+            <LoginForm
+                username={username}
+                password={password}
+                handleUsernameChange={({target}) => setUsername(target.value)}
+                handlePasswordChange={({target}) => setPassword(target.value)}
+                handleSubmit={handleLogin}
+            />
+        </Togglable>
+    )
     const blogFormRef = React.createRef()
     const blogForm = () => (
         <Togglable buttonLabel="new blog" ref={blogFormRef}>
@@ -142,25 +165,23 @@ const App = () => {
     )
     return (
         <div>
-            <h1>Blogisovellus</h1>
-            <Notification message={errorMessage}/>
+            <h1>Blog app</h1>
+            <Notification notification={notification}/>
             {user === null ?
                 loginForm() :
                 <div>
                     <p>{user.name} logged in</p>
+                    <LogoutForm onSubmit={handleLogout}/>
                     {blogForm()}
+                    <h2>Blogs</h2>
+                    {rows()}
                 </div>
             }
-            <h2>Blogit</h2>
             {/*<div>*/}
             {/*<button onClick={() => setShowAll(!showAll)}>*/}
             {/*näytä {showAll ? 'vain tärkeät' : 'kaikki'}*/}
             {/*</button>*/}
             {/*</div>*/}
-            <ul>
-                {rows()}
-            </ul>
-            <Footer/>
         </div>
     )
 }

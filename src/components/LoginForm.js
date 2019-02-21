@@ -4,24 +4,24 @@ import PropTypes from 'prop-types'
 const LoginForm = ({handleSubmit, handleUsernameChange, handlePasswordChange, username, password}) => {
     return (
         <div>
-            <h2>Kirjaudu</h2>
+            <h2>Login</h2>
             <form onSubmit={handleSubmit}>
                 <div>
-                    käyttäjätunnus
+                    <label>username</label>
                     <input
                         value={username}
                         onChange={handleUsernameChange}
                     />
                 </div>
                 <div>
-                    salasana
+                    <label>password</label>
                     <input
                         type="password"
                         value={password}
                         onChange={handlePasswordChange}
                     />
                 </div>
-                <button type="submit">kirjaudu</button>
+                <button type="submit">submit</button>
             </form>
         </div>
     )
