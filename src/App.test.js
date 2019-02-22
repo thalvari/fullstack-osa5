@@ -1,24 +1,55 @@
 import React from 'react'
-import { render, waitForDomChange, waitForElement, wait } from 'react-testing-library'
-jest.mock('./services/notes')
+import {render, waitForElement} from 'react-testing-library'
 import App from './App'
 
-describe('<App />', () => {
-  it('renders all notes it gets from backend', async () => {
-    const component = render(
-      <App />
-    )
-    component.rerender(<App />)
-    await waitForElement(() => component.container.querySelector('.note'))
-    // myös seuraavat toimii
-    //await wait(() => component.getByText('HTML on helppoa'))
-    //await waitForDomChange({ container: component.container })
+jest.mock('./services/blogs')
 
-    const notes = component.container.querySelectorAll('.note')
-    expect(notes.length).toBe(3) 
+describe('integration tests', () => {
+    it('if no user logged, blogs are not rendered', async () => {
+        const component = render(
+            <App/>
+        )
+        component.rerender(<App/>)
+        await waitForElement(() => component.getByText('login'))
+        const blogs = component.container.querySelectorAll('.blog')
+        expect(blogs.length).toBe(0)
+    })
 
-    expect(component.container).toHaveTextContent('HTML on helppoa')
-    expect(component.container).toHaveTextContent('Selain pystyy suorittamaan vain javascriptiä')
-    expect(component.container).toHaveTextContent('HTTP-protokollan tärkeimmät metodit ovat GET ja POST')
-  })
+    it('if logged, blogs are rendered', async () => {
+        const user = {
+            username: 'tester',
+            token: '1231231214',
+            name: 'Teuvo Testaaja'
+        }
+        localStorage.setItem('loggedBlogappUser', JSON.stringify(user))
+        const component = render(
+            <App/>
+        )
+        component.rerender(<App/>)
+        await waitForElement(() => component.container.querySelector('.blog'))
+        const blogs = component.container.querySelectorAll('.blog')
+        expect(blogs.length).toBe(5)
+        expect(component.container).toHaveTextContent('title')
+        expect(component.container).toHaveTextContent('title2')
+        expect(component.container).toHaveTextContent('title3')
+        expect(component.container).toHaveTextContent('title4')
+        expect(component.container).toHaveTextContent('title5')
+    })
 })
+
+// describe('<App/>', () => {
+//     it('renders all blogs it gets from backend', async () => {
+//         const component = render(
+//             <App/>
+//         )
+//         component.rerender(<App/>)
+//         await waitForDomChange({ container: component.container })
+//         const blogs = component.container.querySelectorAll('.blog')
+//         expect(blogs.length).toBe(5)
+//         expect(component.container).toHaveTextContent('title')
+//         expect(component.container).toHaveTextContent('title2')
+//         expect(component.container).toHaveTextContent('title3')
+//         expect(component.container).toHaveTextContent('title4')
+//         expect(component.container).toHaveTextContent('title5')
+//     })
+// })

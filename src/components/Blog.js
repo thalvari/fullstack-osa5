@@ -1,6 +1,6 @@
 import React from 'react'
 
-const Blog = ({blog, show, onClick, onLike}) => {
+const Blog = ({blog, show, onClick, onLike, onRemove, currentUser}) => {
     const blogStyle = {
         paddingTop: 10,
         paddingLeft: 2,
@@ -9,7 +9,7 @@ const Blog = ({blog, show, onClick, onLike}) => {
         marginBottom: 5
     }
     return (
-        <div style={blogStyle}>
+        <div style={blogStyle} className='blog'>
             <div>
                 <div onClick={onClick}>
                     {blog.title} {blog.author}
@@ -23,6 +23,11 @@ const Blog = ({blog, show, onClick, onLike}) => {
                     <div>
                         added by {blog.user.name}
                     </div>
+                    {blog.user.username === currentUser.username &&
+                    <div>
+                        <button onClick={onRemove} type="submit">remove</button>
+                    </div>
+                    }
                 </div>
                 }
             </div>

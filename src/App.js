@@ -29,6 +29,7 @@ const App = () => {
     }, [])
     useEffect(() => {
         const loggedUserJSON = window.localStorage.getItem('loggedBlogappUser')
+        console.log(loggedUserJSON)
         if (loggedUserJSON) {
             const user = JSON.parse(loggedUserJSON)
             setUser(user)
@@ -108,7 +109,6 @@ const App = () => {
         setUser(null)
         // setShowAll(false)
     }
-
     const handleBlogClick = (currentItem) => (event) => {
         setBlogs(blogs
             .filter(item => item.blog.id !== currentItem.blog.id)
@@ -130,6 +130,15 @@ const App = () => {
             .concat({blog: returnedBlog, show: currentItem.show})
             .sort((a, b) => b.blog.likes - a.blog.likes))
     }
+    const handleBlogRemove = (currentItem) => async (event) => {
+        const blog = currentItem.blog
+        if (window.confirm(`Remove blog ${blog.title} ${blog.author}`)) {
+            await blogService.remove(blog.id)
+            setBlogs(blogs
+                .filter(item => item.blog.id !== currentItem.blog.id)
+                .sort((a, b) => b.blog.likes - a.blog.likes))
+        }
+    }
     const rows = () => blogs.map(item =>
         <Blog
             key={item.blog.id}
@@ -137,6 +146,8 @@ const App = () => {
             show={item.show}
             onClick={handleBlogClick(item)}
             onLike={handleBlogLike(item)}
+            onRemove={handleBlogRemove(item)}
+            currentUser={user}
             // toggleImportance={() => toggleImportanceOf(blog.id)}
         />
     )
