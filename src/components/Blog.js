@@ -35,17 +35,4 @@ const Blog = ({blog, show, onClick, onLike, onRemove, currentUser}) => {
     )
 }
 
-// const Blog = ({ blog, toggleImportance }) => {
-//   const label = blog.important
-//     ? 'make not important'
-//     : 'make important'
-//
-//   return (
-//     <li className='blog'>
-//       {blog.content}
-//       <button onClick={toggleImportance}>{label}</button>
-//     </li>
-//   )
-// }
-
 export default Blog

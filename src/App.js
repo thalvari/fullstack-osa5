@@ -7,19 +7,19 @@ import LogoutForm from './components/LogoutForm'
 import BlogForm from './components/BlogForm'
 import blogService from './services/blogs'
 import loginService from './services/login'
+import {useField} from './hooks'
 
 const App = () => {
     const [blogs, setBlogs] = useState([])
-    const [newTitle, setNewTitle] = useState('')
-    const [newAuthor, setNewAuthor] = useState('')
-    const [newUrl, setNewUrl] = useState('')
-    // const [showAll, setShowAll] = useState(false)
     const [notification, setNotification] = useState({
         message: null
     })
-    const [username, setUsername] = useState('')
-    const [password, setPassword] = useState('')
     const [user, setUser] = useState(null)
+    const newTitle = useField('text')
+    const newAuthor = useField('text')
+    const newUrl = useField('text')
+    const username = useField('text')
+    const password = useField('text')
     useEffect(() => {
         blogService.getAll().then(initialBlogs => {
             setBlogs(initialBlogs
@@ -29,32 +29,12 @@ const App = () => {
     }, [])
     useEffect(() => {
         const loggedUserJSON = window.localStorage.getItem('loggedBlogappUser')
-        console.log(loggedUserJSON)
         if (loggedUserJSON) {
             const user = JSON.parse(loggedUserJSON)
             setUser(user)
             blogService.setToken(user.token)
         }
     }, [])
-    // const toggleImportanceOf = id => {
-    //     const note = blogs.find(n => n.id === id)
-    //     const changedNote = {...note, important: !note.important}
-    //
-    //     blogService
-    //         .update(changedNote).then(returnedNote => {
-    //         setBlogs(blogs.map(note => note.id !== id ? note : returnedNote))
-    //     })
-    //         .catch(() => {
-    //             setErrorMessage(`muistiinpano '${note.content}' on jo valitettavasti poistettu palvelimelta`)
-    //             setTimeout(() => {
-    //                 setErrorMessage(null)
-    //             }, 5000)
-    //             setBlogs(blogs.filter(n => n.id !== id))
-    //         })
-    // }
-    // const blogsToShow = showAll
-    //     ? blogs
-    // : blogs.filter(note => note.important)
     const notify = (message, type = 'success') => {
         setNotification({message, type})
         setTimeout(() => setNotification({message: null}), 5000)
@@ -64,41 +44,31 @@ const App = () => {
         try {
             blogFormRef.current.toggleVisibility()
             const blogObject = {
-                title: newTitle,
-                author: newAuthor,
-                url: newUrl,
+                title: newTitle.value,
+                author: newAuthor.value,
+                url: newUrl.value,
             }
             const returnedBlog = await blogService.create(blogObject)
             setBlogs(blogs.concat({blog: returnedBlog, show: false}))
-            notify(`a new blog ${newTitle}, by ${newAuthor} added`)
-            setNewTitle('')
-            setNewAuthor('')
-            setNewUrl('')
+            notify(`a new blog ${newTitle.value}, by ${newAuthor.value} added`)
+            newTitle.onReset()
+            newAuthor.onReset()
+            newUrl.onReset()
         } catch (exception) {
             notify('bad title, author or url', 'error')
         }
-    }
-    const handleTitleChange = (event) => {
-        setNewTitle(event.target.value)
-    }
-    const handleAuthorChange = (event) => {
-        setNewAuthor(event.target.value)
-    }
-    const handleUrlChange = (event) => {
-        setNewUrl(event.target.value)
     }
     const handleLogin = async (event) => {
         event.preventDefault()
         try {
             const user = await loginService.login({
-                username, password,
+                username: username.value, password: password.value,
             })
             window.localStorage.setItem('loggedBlogappUser', JSON.stringify(user))
             blogService.setToken(user.token)
             setUser(user)
-            setUsername('')
-            setPassword('')
-            // setShowAll(true)
+            username.onReset()
+            password.onReset()
         } catch (exception) {
             notify('wrong username or password', 'error')
         }
@@ -107,7 +77,6 @@ const App = () => {
         window.localStorage.removeItem('loggedBlogappUser')
         blogService.setToken(null)
         setUser(null)
-        // setShowAll(false)
     }
     const handleBlogClick = (currentItem) => (event) => {
         setBlogs(blogs
@@ -148,7 +117,6 @@ const App = () => {
             onLike={handleBlogLike(item)}
             onRemove={handleBlogRemove(item)}
             currentUser={user}
-            // toggleImportance={() => toggleImportanceOf(blog.id)}
         />
     )
     const loginForm = () => (
@@ -156,8 +124,6 @@ const App = () => {
             <LoginForm
                 username={username}
                 password={password}
-                handleUsernameChange={({target}) => setUsername(target.value)}
-                handlePasswordChange={({target}) => setPassword(target.value)}
                 handleSubmit={handleLogin}
             />
         </Togglable>
@@ -168,11 +134,8 @@ const App = () => {
             <BlogForm
                 onSubmit={addBlog}
                 title={newTitle}
-                handleTitleChange={handleTitleChange}
                 author={newAuthor}
-                handleAuthorChange={handleAuthorChange}
                 url={newUrl}
-                handleUrlChange={handleUrlChange}
             />
         </Togglable>
     )
@@ -190,11 +153,6 @@ const App = () => {
                     {rows()}
                 </div>
             }
-            {/*<div>*/}
-            {/*<button onClick={() => setShowAll(!showAll)}>*/}
-            {/*näytä {showAll ? 'vain tärkeät' : 'kaikki'}*/}
-            {/*</button>*/}
-            {/*</div>*/}
         </div>
     )
 }

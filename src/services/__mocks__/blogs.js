@@ -65,6 +65,7 @@ const getAll = () => {
     return Promise.resolve(blogs)
 }
 
-const setToken = newToken => {}
+const setToken = newToken => {
+}
 
 export default {getAll, setToken}

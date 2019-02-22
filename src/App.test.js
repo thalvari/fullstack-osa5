@@ -36,20 +36,3 @@ describe('integration tests', () => {
         expect(component.container).toHaveTextContent('title5')
     })
 })
-
-// describe('<App/>', () => {
-//     it('renders all blogs it gets from backend', async () => {
-//         const component = render(
-//             <App/>
-//         )
-//         component.rerender(<App/>)
-//         await waitForDomChange({ container: component.container })
-//         const blogs = component.container.querySelectorAll('.blog')
-//         expect(blogs.length).toBe(5)
-//         expect(component.container).toHaveTextContent('title')
-//         expect(component.container).toHaveTextContent('title2')
-//         expect(component.container).toHaveTextContent('title3')
-//         expect(component.container).toHaveTextContent('title4')
-//         expect(component.container).toHaveTextContent('title5')
-//     })
-// })
